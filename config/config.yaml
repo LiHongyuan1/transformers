@@ -9,23 +9,31 @@ defaults:
   - metrics: default_metrics
 
 experiment:
-  project: cross_view_transformers_test               # wandb project
-  uuid: ${now:%m%d_%H%M%S}                            # model name
+  project: cross_view_transformers_test
+
+  # wandb project
+  #新训练
+  uuid: ${now:%m%d_%H%M%S}
+  #uuid: '0220_232747'
   save_dir: ${hydra:runtime.cwd}/logs/                # log directory, will be created
 
   seed: 2022
   checkpoint_interval: 1000
   log_image_interval: 500
 
+  #lhy modify  true 是继续训练  false 是从新训练
+  resume: true
+
+#lhy modify  训练数据集路径
 loader:
-  batch_size: 4
-  num_workers: 4
+  batch_size: 2
+  num_workers: 2
   pin_memory: True
-  prefetch_factor: 4
+  prefetch_factor: 2
 
 # AdamW
 optimizer:
-  lr: 4e-3
+  lr: 1e-3
   weight_decay: 1e-7
 
 # OneCycleLR
@@ -42,9 +50,11 @@ trainer:
   max_steps: 30001
   log_every_n_steps: 50
 
-  gpus: -1
-  precision: 32
+  accelerator: gpu
+  devices: auto
+  precision: 16-mixed
 
+  accumulate_grad_batches: 2  # 每 2 个 mini-batch 梯度累积一次，相当于整体 batch size 为 2*2 = 4
   limit_train_batches: 1.0
   limit_val_batches: 1.0
   check_val_every_n_epoch: 1

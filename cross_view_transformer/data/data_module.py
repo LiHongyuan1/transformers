@@ -23,8 +23,16 @@ class DataModule(pl.LightningDataModule):
 
         loader_config = dict(self.loader_config)
 
+        #lhy modify:
         if loader_config['num_workers'] == 0:
-            loader_config['prefetch_factor'] = 2
+            # 移除 prefetch_factor 参数
+            loader_config.pop('prefetch_factor', None)
+        else:
+            # 如果 num_workers > 0，可以设置一个默认的 prefetch_factor
+            loader_config.setdefault('prefetch_factor', 2)
+
+            # 打印 loader_config 以便调试
+        print(f"Loader config for split '{split}': {loader_config}")
 
         return torch.utils.data.DataLoader(dataset, shuffle=shuffle, **loader_config)
 

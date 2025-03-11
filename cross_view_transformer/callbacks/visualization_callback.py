@@ -6,8 +6,11 @@ from typing import Any, Optional
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.utilities import rank_zero_only
-from pytorch_lightning.utilities.warnings import rank_zero_warn
-
+#lhy modify
+from pytorch_lightning.utilities.rank_zero import rank_zero_warn
+#lhy modify
+# 新增导入：直接从 torch.utils.tensorboard 导入 SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 class VisualizationCallback(pl.Callback):
     def __init__(self, visualizers, log_image_interval=1000):
@@ -48,7 +51,8 @@ class VisualizationCallback(pl.Callback):
             self._log_image(viz(**outputs), f'{prefix}/{key}', trainer.logger)
 
     def _log_image(self, image_batch, tag, logger):
-        if isinstance(logger, torch.utils.tensorboard.writer.SummaryWriter):
+        #lhy modify
+        if isinstance(logger, SummaryWriter):
             logger.add_images(tag=tag, img_tensor=torch.from_numpy(image_batch), dataformats='NHWC')
         elif isinstance(logger, WandbLogger):
             logger.log_image(tag, image_batch)

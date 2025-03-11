@@ -113,7 +113,9 @@ class LoadDataTransform(torchvision.transforms.ToTensor):
         }[augment] + [torchvision.transforms.ToTensor()]
 
         self.img_transform = torchvision.transforms.Compose(xform)
-        self.to_tensor = super().__call__
+        #lhy modify
+        # 保存父类的 __call__ 方法（未绑定），避免递归调用本类的 __call__
+        self._to_tensor = torchvision.transforms.ToTensor.__call__
 
     def get_cameras(self, sample: Sample, h, w, top_crop):
         """
@@ -156,7 +158,9 @@ class LoadDataTransform(torchvision.transforms.ToTensor):
             bev = Image.open(scene_dir / sample.bev)
             bev = decode(bev, self.num_classes)
             bev = (255 * bev).astype(np.uint8)
-            bev = self.to_tensor(bev)
+            #lhy modify
+            # 注意这里调用父类的 __call__，传入 self 作为第一个参数
+            bev = self._to_tensor(self, bev)
 
         result = {
             'bev': bev,
@@ -169,19 +173,27 @@ class LoadDataTransform(torchvision.transforms.ToTensor):
 
         if 'aux' in sample:
             aux = np.load(scene_dir / sample.aux)['aux']
-            result['center'] = self.to_tensor(aux[..., 1])
+            # lhy modify
+            result['center'] = self._to_tensor(self, aux[..., 1])
 
         if 'pose' in sample:
             result['pose'] = np.float32(sample['pose'])
 
         return result
 
+    #lhy modify
     def __call__(self, batch):
-        if not isinstance(batch, Sample):
-            batch = Sample(**batch)
+        # 如果传入的是字典或 Sample，则按原流程处理
+        if isinstance(batch, (Sample, dict)):
+            sample = Sample(**batch) if isinstance(batch, dict) else batch
+            result = {}
+            result.update(self.get_cameras(sample, **self.image_config))
+            result.update(self.get_bev(sample))
+            return result
+        # 如果传入的是 numpy.ndarray，则认为其是 bev 数据，直接转换为 tensor 后返回
+        elif isinstance(batch, np.ndarray):
+            bev_tensor = self._to_tensor(self, batch)
+            return {"bev": bev_tensor}
+        else:
+            raise TypeError(f"Expected batch to be a dict or Sample, got {type(batch)}")
 
-        result = dict()
-        result.update(self.get_cameras(batch, **self.image_config))
-        result.update(self.get_bev(batch))
-
-        return result

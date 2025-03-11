@@ -9,7 +9,8 @@ class BaseIoUMetric(Metric):
     Computes intersection over union at given thresholds
     """
     def __init__(self, thresholds=[0.4, 0.5]):
-        super().__init__(dist_sync_on_step=False, compute_on_step=False)
+        #lhy modify
+        super().__init__(dist_sync_on_step=False)
 
         thresholds = torch.FloatTensor(thresholds)
 
@@ -53,6 +54,7 @@ class IoUMetric(BaseIoUMetric):
 
         self.label_indices = label_indices
         self.min_visibility = min_visibility
+
 
     def update(self, pred, batch):
         if isinstance(pred, dict):

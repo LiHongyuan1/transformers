@@ -20,8 +20,9 @@ def setup(cfg):
     if 'shuffle' not in cfg:
         cfg.shuffle = False
 
-
-@hydra.main(config_path=Path.cwd() / 'config', config_name='config.yaml')
+@hydra.main(config_path=str(Path.cwd() / 'config'), config_name='config.yaml' ,  version_base=None)
+#lhy modify
+#@hydra.main(config_path=Path.cwd() / 'config', config_name='config.yaml')
 def main(cfg):
     setup_config(cfg, setup)
 
